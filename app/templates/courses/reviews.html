@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Отзывы для курса "{{ course.name }}"</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('courses.show', course_id=course.id) }}" class="btn btn-secondary">Назад к курсу</a>
+    </div>
+    <form class="d-flex align-items-center" action="{{ url_for('courses.reviews', course_id=course.id) }}" method="GET">
+        <input type="hidden" name="course_id" value="{{ course.id }}">
+        <label for="sortOrder" class="me-2">Сортировать по:</label>
+        <select name="sort_by" id="sortOrder" class="form-select">
+            <option value="newest" {% if sort_by=='newest' %}selected{% endif %}>Новизне</option>
+            <option value="positive" {% if sort_by=='positive' %}selected{% endif %}>Положительные</option>
+            <option value="negative" {% if sort_by=='negative' %}selected{% endif %}>Отрицательные</option>
+        </select>
+        <button type="submit" class="btn btn-primary ms-2">Применить</button>
+    </form>    
+    {% if reviews_all.items %}
+        {% for review in reviews_all.items %}
+        <div class="col-md-12">
+            <div class="card mb-3">
+                <div class="card-body">
+                    {# for user in users #}
+                        {# if review.user_id == user.id #}
+                            <h5 class="card-title mb-3">{{ review.first_name }} {{ review.last_name }}</h5>
+                        {# endif #}
+                    {# endfor #}
+                    {% if review.Review.rating == 0 %}
+                        <p class="card-text">Оценка: Ужасно</p>
+                    {% elif review.Review.rating == 1 %}
+                        <p class="card-text">Оценка: Плохо</p>
+                    {% elif review.Review.rating == 2 %}
+                        <p class="card-text">Оценка: Неудовлетворительно</p>
+                    {% elif review.Review.rating == 3 %}
+                        <p class="card-text">Оценка: Удовлетворительно</p>
+                    {% elif review.Review.rating == 4 %}
+                        <p class="card-text">Оценка: Хорошо</p>
+                    {% elif review.Review.rating == 5 %}
+                        <p class="card-text">Оценка: Отлично</p>
+                    {% endif %}
+                    <p class="card-text">Дата: {{ review.Review.created_at }}</p>
+                    <p class="card-text">{{ review.Review.text }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if reviews_all.pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if reviews_all.has_prev %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('courses.reviews', course_id=course.id, page=reviews_all.prev_num, sort_by=sort_by) }}">Назад</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">Назад</a></li>
+                    {% endif %}
+                    {% for page_num in range(reviews_all.page - 2, reviews_all.page + 3) %}
+                        {% if page_num > 0 and page_num <= reviews_all.pages %}
+                            {% if page_num == reviews_all.page %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="{{ url_for('courses.reviews', course_id=course.id, page=page_num, sort_by=sort_by) }}">{{ page_num }}</a></li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if reviews_all.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('courses.reviews', course_id=course.id, page=reviews_all.next_num, sort_by=sort_by) }}">Вперед</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">Вперед</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <p>Отзывов пока нет.</p>
+    {% endif %}
+
+    <!-- Поле для отзыва -->
+    {% if current_user.is_authenticated %}
+        {% if flag == False %}
+            <section class="add-review mb-3">
+                <h2 class="mb-3 text-center text-uppercase font-weight-bold">Оставить отзыв</h2>
+                <form method="post" action="{{ url_for('courses.add_review', course_id=course.id) }}">
+                    <div class="mb-3">
+                        <label for="rating" class="form-label">Оценка</label>
+                        <select class="form-select" id="rating" name="rating" required>
+                            <option value="" selected disabled hidden>Выберите оценку</option>
+                            <option value="5">Отлично</option>
+                            <option value="4">Хорошо</option>
+                            <option value="3">Удовлетворительно</option>
+                            <option value="2">Неудовлетворительно</option>
+                            <option value="1">Плохо</option>
+                            <option value="0">Ужасно</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="text" class="form-label">Текст отзыва</label>
+                        <textarea class="form-control" id="text" name="text" rows="5" required></textarea>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Оставить отзыв</button>
+                    </div>
+                </form>
+            </section>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
